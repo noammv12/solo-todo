@@ -47,8 +47,8 @@ class StatusViewModel @Inject constructor(
     private val dqRepo: DailyQuestRepository,
     settingsRepo: SettingsRepository,
     dungeonRepo: DungeonRepository,
-    private val dayBoundary: DayBoundary = DayBoundary(),
-    private val clock: Clock = Clock.System,
+    private val dayBoundary: DayBoundary,
+    private val clock: Clock,
 ) : ViewModel() {
 
     init {

@@ -29,8 +29,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class NaturalLanguageDateParser @Inject constructor(
-    private val clock: Clock = Clock.System,
-    private val zone: TimeZone = TimeZone.currentSystemDefault(),
+    private val clock: Clock,
+    private val zone: TimeZone,
 ) {
     data class Parse(
         val title: String,

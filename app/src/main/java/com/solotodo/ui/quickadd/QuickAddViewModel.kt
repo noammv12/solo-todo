@@ -21,7 +21,7 @@ data class QuickAddUiState(
 @HiltViewModel
 class QuickAddViewModel @Inject constructor(
     private val taskRepo: TaskRepository,
-    private val parser: NaturalLanguageDateParser = NaturalLanguageDateParser(),
+    private val parser: NaturalLanguageDateParser,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(QuickAddUiState())

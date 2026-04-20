@@ -28,8 +28,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class DayBoundary @Inject constructor(
-    private val zone: TimeZone = TimeZone.currentSystemDefault(),
-    private val clock: Clock = Clock.System,
+    private val zone: TimeZone,
+    private val clock: Clock,
 ) {
     /** Current local date (what `today` means to the user right now). */
     fun today(): LocalDate = clock.now().toLocalDateTime(zone).date
