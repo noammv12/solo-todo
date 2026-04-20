@@ -1,0 +1,63 @@
+package com.solotodo.data.repository
+
+import androidx.room.withTransaction
+import com.solotodo.data.local.OpKind
+import com.solotodo.data.local.SoloTodoDb
+import com.solotodo.data.local.ThemeAccent
+import com.solotodo.data.local.dao.SettingsDao
+import com.solotodo.data.local.entity.UserSettingsEntity
+import com.solotodo.data.sync.OpLogWriter
+import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Clock
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class SettingsRepository @Inject constructor(
+    private val db: SoloTodoDb,
+    private val dao: SettingsDao,
+    private val opLog: OpLogWriter,
+    private val clock: Clock = Clock.System,
+) {
+    fun observe(): Flow<UserSettingsEntity?> = dao.observe()
+    suspend fun get(): UserSettingsEntity? = dao.get()
+
+    /** First-run initialiser. Writes a default row if none exists. */
+    suspend fun initializeIfMissing(): UserSettingsEntity {
+        dao.get()?.let { return it }
+        val defaults = defaultSettings(clock.now())
+        db.withTransaction {
+            dao.upsert(defaults)
+            opLog.record(ENTITY, defaults.id, OpKind.CREATE, null, "{}")
+        }
+        return defaults
+    }
+
+    suspend fun update(settings: UserSettingsEntity) {
+        db.withTransaction {
+            dao.upsert(settings.copy(updatedAt = clock.now()))
+            opLog.record(ENTITY, settings.id, OpKind.PATCH, null, "{}")
+        }
+    }
+
+    companion object {
+        const val ENTITY = "user_settings"
+
+        fun defaultSettings(now: kotlinx.datetime.Instant): UserSettingsEntity = UserSettingsEntity(
+            designation = "HUNTER",
+            theme = ThemeAccent.CYAN,
+            haptics = DEFAULT_HAPTICS_JSON,
+            notifications = DEFAULT_NOTIFICATIONS_JSON,
+            reduceMotion = false,
+            vacationUntil = null,
+            streakFreezes = 0,
+            updatedAt = now,
+        )
+
+        // Retention overrides: notifications default to off (see plan §deliberate-overrides).
+        private const val DEFAULT_HAPTICS_JSON =
+            """{"master":true,"tap":true,"success":true,"threshold":true,"rank_up":true,"warning":true}"""
+        private const val DEFAULT_NOTIFICATIONS_JSON =
+            """{"morning":false,"evening":false,"rank_up":false,"reflection":false}"""
+    }
+}

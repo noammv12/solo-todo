@@ -1,6 +1,7 @@
 package com.solotodo.ui.devgallery
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.solotodo.designsystem.SoloTokens
 import com.solotodo.designsystem.components.CornerBrackets
 import com.solotodo.designsystem.components.DiamondCheck
@@ -50,12 +53,19 @@ import com.solotodo.designsystem.theme.SystemMonoLabel
  * Used to visually verify each primitive matches the prototype screenshots.
  */
 @Composable
-fun DevGalleryScreen() {
+fun DevGalleryScreen(
+    viewModel: DevGalleryViewModel = hiltViewModel(),
+) {
+    val completedCount by viewModel.completedCount.collectAsState()
+    val status by viewModel.status.collectAsState()
     Box(modifier = Modifier.fillMaxSize().background(SoloTokens.Colors.BgVoid)) {
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            item { SectionHeader("DATABASE · DEV TOOLS") }
+            item { DbControls(completed = completedCount, status = status, onSeed = viewModel::seed, onWipe = viewModel::wipe) }
+
             item { SectionHeader("TOKENS · COLORS") }
             item { ColorSwatches() }
 
@@ -114,6 +124,49 @@ private fun SectionHeader(label: String) {
         color = SoloTokens.Colors.Stroke,
         style = SystemMonoLabel,
     )
+}
+
+@Composable
+private fun DbControls(
+    completed: Int,
+    status: String?,
+    onSeed: () -> Unit,
+    onWipe: () -> Unit,
+) {
+    Panel(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = "completed tasks (live from Room): $completed",
+                color = SoloTokens.Colors.Text,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (status != null) {
+                Text(
+                    text = "status: $status",
+                    color = SoloTokens.Colors.Glow,
+                    style = SystemMonoLabel,
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "› SEED",
+                    color = SoloTokens.Colors.Glow,
+                    style = SystemMonoLabel,
+                    modifier = Modifier
+                        .clickable { onSeed() }
+                        .padding(8.dp),
+                )
+                Text(
+                    text = "› WIPE",
+                    color = SoloTokens.Colors.Danger,
+                    style = SystemMonoLabel,
+                    modifier = Modifier
+                        .clickable { onWipe() }
+                        .padding(8.dp),
+                )
+            }
+        }
+    }
 }
 
 @Composable
