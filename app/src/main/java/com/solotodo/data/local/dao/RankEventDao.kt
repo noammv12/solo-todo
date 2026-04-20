@@ -22,6 +22,10 @@ interface RankEventDao {
     @Query("SELECT * FROM rank_event WHERE id = :id LIMIT 1")
     suspend fun getById(id: String): RankEventEntity?
 
+    /** Used only by the Realtime subscriber when a DELETE event arrives. */
+    @Query("DELETE FROM rank_event WHERE id = :id")
+    suspend fun deleteById(id: String)
+
     @Query("UPDATE rank_event SET cinematic_played = 1 WHERE id = :id")
     suspend fun markPlayed(id: String)
 

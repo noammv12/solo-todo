@@ -56,4 +56,12 @@ interface DungeonDao {
 
     @Query("SELECT * FROM dungeon_floor WHERE id = :id")
     suspend fun getFloor(id: String): DungeonFloorEntity?
+
+    /** Used only by the Realtime subscriber when a DELETE event arrives. */
+    @Query("DELETE FROM dungeon WHERE id = :id")
+    suspend fun deleteDungeonById(id: String)
+
+    /** Used only by the Realtime subscriber when a DELETE event arrives. */
+    @Query("DELETE FROM dungeon_floor WHERE id = :id")
+    suspend fun deleteFloorById(id: String)
 }

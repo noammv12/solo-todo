@@ -19,6 +19,10 @@ interface ReflectionDao {
     @Query("SELECT * FROM reflection WHERE id = :id LIMIT 1")
     suspend fun getById(id: String): ReflectionEntity?
 
+    /** Used only by the Realtime subscriber when a DELETE event arrives. */
+    @Query("DELETE FROM reflection WHERE id = :id")
+    suspend fun deleteById(id: String)
+
     @Query("SELECT * FROM reflection ORDER BY week_start DESC")
     fun observeAll(): Flow<List<ReflectionEntity>>
 

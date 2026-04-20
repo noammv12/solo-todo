@@ -29,6 +29,14 @@ interface DailyQuestDao {
     @Query("SELECT * FROM daily_quest_item WHERE id = :id")
     suspend fun getItem(id: String): DailyQuestItemEntity?
 
+    /** Used only by the Realtime subscriber when a DELETE event arrives. */
+    @Query("DELETE FROM daily_quest_item WHERE id = :id")
+    suspend fun deleteItemById(id: String)
+
+    /** Used only by the Realtime subscriber when a DELETE event arrives. */
+    @Query("DELETE FROM daily_quest_log WHERE id = :id")
+    suspend fun deleteLogById(id: String)
+
     @Query("SELECT COUNT(*) FROM daily_quest_item WHERE active = 1")
     fun observeActiveItemCount(): Flow<Int>
 
