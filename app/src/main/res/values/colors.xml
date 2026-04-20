@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors com.solotodo.designsystem.SoloTokens.Colors for Android resource use -->
+    <color name="bg_void">#FF05070E</color>
+    <color name="bg_panel">#FF0A1628</color>
+    <color name="stroke">#FF1FB6FF</color>
+    <color name="glow">#FF00D4FF</color>
+    <color name="text">#FFE5F4FF</color>
+    <color name="ic_launcher_background">#FF05070E</color>
+</resources>
