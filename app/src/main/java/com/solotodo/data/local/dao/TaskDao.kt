@@ -33,6 +33,14 @@ interface TaskDao {
     @Query("SELECT * FROM task WHERE id = :id")
     suspend fun getById(id: String): TaskEntity?
 
+    /**
+     * Hard-delete by id. Used only by the Realtime subscriber when a DELETE
+     * event arrives from the server. The app itself always soft-deletes via
+     * [softDelete].
+     */
+    @Query("DELETE FROM task WHERE id = :id")
+    suspend fun deleteById(id: String)
+
     @Query("SELECT * FROM task WHERE id = :id")
     fun observeById(id: String): Flow<TaskEntity?>
 

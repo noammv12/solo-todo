@@ -38,6 +38,7 @@ class SyncBootstrapper @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val authRepository: AuthRepository,
     private val opLogDao: OpLogDao,
+    private val realtimeSubscriber: RealtimeSubscriber,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -46,12 +47,20 @@ class SyncBootstrapper @Inject constructor(
             .distinctUntilChanged()
             .onEach { state ->
                 when (state) {
-                    is AuthRepository.AuthState.Guest,
+                    is AuthRepository.AuthState.Guest -> {
+                        enqueueInitialPull()
+                        enqueuePeriodicSync()
+                        realtimeSubscriber.startAsync(state.userId)
+                    }
                     is AuthRepository.AuthState.Authenticated -> {
                         enqueueInitialPull()
                         enqueuePeriodicSync()
+                        realtimeSubscriber.startAsync(state.userId)
                     }
-                    AuthRepository.AuthState.NotAuthed -> cancelAll()
+                    AuthRepository.AuthState.NotAuthed -> {
+                        cancelAll()
+                        realtimeSubscriber.stopAsync()
+                    }
                     AuthRepository.AuthState.Loading -> Unit
                 }
             }
