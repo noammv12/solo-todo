@@ -1,0 +1,3 @@
+# Room schema exports land here at compile time.
+# Each DB version gets a JSON file: com.solotodo.data.local.SoloTodoDb/1.json, 2.json, ...
+# Commit these files so migrations are reviewable in PRs.
