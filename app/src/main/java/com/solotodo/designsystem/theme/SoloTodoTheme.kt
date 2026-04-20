@@ -3,7 +3,6 @@ package com.solotodo.designsystem.theme
 import android.app.Activity
 import android.view.View
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -57,7 +56,7 @@ fun SoloTodoTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography(), // Replaced with Solo typography in Phase 1
+        typography = SoloTypography,
         content = content,
     )
 }
