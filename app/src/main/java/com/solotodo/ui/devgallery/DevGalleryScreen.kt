@@ -62,6 +62,8 @@ fun DevGalleryScreen(
     val completedCount by viewModel.completedCount.collectAsState()
     val status by viewModel.status.collectAsState()
     val pendingOpCount by viewModel.pendingOpCount.collectAsState()
+    val quarantinedCount by viewModel.quarantinedCount.collectAsState()
+    val latestQuarantinedError by viewModel.latestQuarantinedError.collectAsState()
     val syncStates by viewModel.syncStates.collectAsState()
     val authState by viewModel.authState.collectAsState()
     val lastSnapshot by viewModel.lastSnapshot.collectAsState()
@@ -74,11 +76,14 @@ fun DevGalleryScreen(
             item {
                 SyncStatusPanel(
                     pendingOpCount = pendingOpCount,
+                    quarantinedCount = quarantinedCount,
+                    latestQuarantinedError = latestQuarantinedError,
                     syncStates = syncStates,
                     authState = authState,
                     lastSnapshot = lastSnapshot,
                     onSyncNow = viewModel::syncNow,
                     onClearOpLog = viewModel::clearOpLog,
+                    onReleaseQuarantine = viewModel::releaseQuarantine,
                 )
             }
 
@@ -148,11 +153,14 @@ private fun SectionHeader(label: String) {
 @Composable
 private fun SyncStatusPanel(
     pendingOpCount: Int,
+    quarantinedCount: Int,
+    latestQuarantinedError: String?,
     syncStates: List<SyncStateEntity>,
     authState: AuthRepository.AuthState,
     lastSnapshot: SyncEngine.Snapshot?,
     onSyncNow: () -> Unit,
     onClearOpLog: () -> Unit,
+    onReleaseQuarantine: () -> Unit,
 ) {
     Panel(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -166,6 +174,20 @@ private fun SyncStatusPanel(
                 color = if (pendingOpCount == 0) SoloTokens.Colors.TextMuted else SoloTokens.Colors.Glow,
                 style = SystemMonoLabel,
             )
+            if (quarantinedCount > 0) {
+                Text(
+                    text = "quarantined: $quarantinedCount",
+                    color = SoloTokens.Colors.Danger,
+                    style = SystemMonoLabel,
+                )
+                latestQuarantinedError?.let { err ->
+                    Text(
+                        text = "  last: $err",
+                        color = SoloTokens.Colors.Danger,
+                        style = SystemMonoLabel,
+                    )
+                }
+            }
             if (lastSnapshot != null) {
                 Text(
                     text = "last sync: ${lastSnapshot.ranAt}",
@@ -231,6 +253,16 @@ private fun SyncStatusPanel(
                         .clickable { onClearOpLog() }
                         .padding(8.dp),
                 )
+                if (quarantinedCount > 0) {
+                    Text(
+                        text = "› RELEASE QUARANTINE",
+                        color = SoloTokens.Colors.Glow,
+                        style = SystemMonoLabel,
+                        modifier = Modifier
+                            .clickable { onReleaseQuarantine() }
+                            .padding(8.dp),
+                    )
+                }
             }
         }
     }

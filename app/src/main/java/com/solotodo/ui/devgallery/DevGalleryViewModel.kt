@@ -7,6 +7,7 @@ import com.solotodo.data.dev.DevSeeder
 import com.solotodo.data.local.dao.OpLogDao
 import com.solotodo.data.local.dao.SyncStateDao
 import com.solotodo.data.local.dao.TaskDao
+import com.solotodo.data.local.entity.OpLogEntity
 import com.solotodo.data.local.entity.SyncStateEntity
 import com.solotodo.data.sync.SyncEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -41,6 +43,18 @@ class DevGalleryViewModel @Inject constructor(
 
     val pendingOpCount: StateFlow<Int> = opLogDao.observePendingCount()
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    val quarantinedCount: StateFlow<Int> = opLogDao
+        .observeQuarantinedCount(OpLogEntity.QUARANTINE_SENTINEL)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    val latestQuarantinedError: StateFlow<String?> = opLogDao
+        .observeQuarantinedCount(OpLogEntity.QUARANTINE_SENTINEL)
+        .map { count ->
+            if (count > 0) opLogDao.latestQuarantinedError(OpLogEntity.QUARANTINE_SENTINEL)
+            else null
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val syncStates: StateFlow<List<SyncStateEntity>> = syncStateDao.observeAll()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -84,6 +98,14 @@ class DevGalleryViewModel @Inject constructor(
             _status.value = "clearing op-log…"
             val removed = syncEngine.clearOpLog()
             _status.value = "op-log cleared ($removed rows)"
+        }
+    }
+
+    fun releaseQuarantine() {
+        viewModelScope.launch {
+            _status.value = "releasing quarantined ops…"
+            val released = syncEngine.releaseQuarantine()
+            _status.value = "released $released op(s) for retry"
         }
     }
 }

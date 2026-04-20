@@ -68,8 +68,11 @@ abstract class SoloTodoDb : RoomDatabase() {
     abstract fun syncStateDao(): SyncStateDao
 
     companion object {
-        /** V2 adds `sync_state` for per-table pull bookmarks. */
-        const val SCHEMA_VERSION = 2
+        /**
+         * V2 added `sync_state` for per-table pull bookmarks.
+         * V3 added `retry_count` + `last_error` columns to `op_log` for push retry/quarantine.
+         */
+        const val SCHEMA_VERSION = 3
         const val DATABASE_NAME = "solotodo.db"
     }
 }

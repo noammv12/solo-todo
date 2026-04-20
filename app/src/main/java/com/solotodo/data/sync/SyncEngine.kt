@@ -4,6 +4,7 @@ import com.solotodo.data.auth.AuthRepository
 import com.solotodo.data.local.SoloTodoDb
 import com.solotodo.data.local.dao.OpLogDao
 import com.solotodo.data.local.dao.SyncStateDao
+import com.solotodo.data.local.entity.OpLogEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -78,9 +79,16 @@ class SyncEngine @Inject constructor(
                     pushed++
                 } catch (e: Exception) {
                     failed++
-                    // Don't rethrow — keep draining. The op stays un-acked and
-                    // will be retried next cycle. If it fails repeatedly we
-                    // may want to quarantine (future enhancement).
+                    // Record the failure. After QUARANTINE_THRESHOLD retries
+                    // the op is stamped with QUARANTINE_SENTINEL so `pending()`
+                    // stops returning it and the queue can drain past it.
+                    opLogDao.incrementRetry(
+                        opId = op.opId,
+                        errorMessage = (e.message ?: e::class.simpleName)
+                            ?.take(MAX_ERROR_LENGTH),
+                        threshold = OpLogEntity.QUARANTINE_THRESHOLD,
+                        quarantineSentinel = OpLogEntity.QUARANTINE_SENTINEL,
+                    )
                 }
             }
 
@@ -138,6 +146,13 @@ class SyncEngine @Inject constructor(
     suspend fun clearOpLog(): Int = opLogDao.clearAll()
 
     /**
+     * Debug-gallery action: release every quarantined op so it retries on the
+     * next drain. Returns the number of rows reset.
+     */
+    suspend fun releaseQuarantine(): Int =
+        opLogDao.releaseQuarantine(OpLogEntity.QUARANTINE_SENTINEL)
+
+    /**
      * If the last-seen user differs from the current one, wipe all local
      * tables (including op-log) before the next pull. Protects against
      * cross-user data leaks after sign-out / sign-in with a different
@@ -161,5 +176,8 @@ class SyncEngine @Inject constructor(
     companion object {
         /** Ops per drain batch; tuned for op-log index + Postgrest throughput. */
         const val BATCH = 100
+
+        /** Error messages are truncated before storage to keep op_log rows small. */
+        const val MAX_ERROR_LENGTH = 500
     }
 }

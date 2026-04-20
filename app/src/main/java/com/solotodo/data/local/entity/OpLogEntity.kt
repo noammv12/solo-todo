@@ -39,4 +39,27 @@ data class OpLogEntity(
     @ColumnInfo(name = "origin_device_id") val originDeviceId: String,
     @ColumnInfo(name = "applied_at") val appliedAt: Instant,
     @ColumnInfo(name = "synced_at") val syncedAt: Instant?,
-)
+    /**
+     * Failed-push counter. Bumped each time the sync engine throws while
+     * pushing this op. When it crosses [QUARANTINE_THRESHOLD], `synced_at` is
+     * set to [QUARANTINE_SENTINEL] so `pending()` skips it.
+     */
+    @ColumnInfo(name = "retry_count", defaultValue = "0")
+    val retryCount: Int = 0,
+    /** Truncated error message from the most recent push failure, for debugging. */
+    @ColumnInfo(name = "last_error")
+    val lastError: String? = null,
+) {
+    companion object {
+        /** After this many failures, an op is quarantined. */
+        const val QUARANTINE_THRESHOLD: Int = 5
+
+        /**
+         * Sentinel stamped into `synced_at` when an op is quarantined.
+         * `Instant.DISTANT_PAST` is safely before any real clock value, so
+         * `pending()` (which filters `synced_at IS NULL`) naturally skips it,
+         * and `purgeAckedBefore(cutoff)` eventually cleans it up.
+         */
+        val QUARANTINE_SENTINEL: Instant = Instant.DISTANT_PAST
+    }
+}
