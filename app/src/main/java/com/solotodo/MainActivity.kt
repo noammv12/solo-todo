@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.solotodo.designsystem.theme.SoloTodoTheme
 import com.solotodo.ui.devgallery.DevGalleryScreen
-import com.solotodo.ui.placeholder.PlaceholderScreen
+import com.solotodo.ui.nav.SoloTodoNav
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -24,8 +24,8 @@ class MainActivity : ComponentActivity() {
                 if (showGallery) {
                     DevGalleryScreen()
                 } else {
-                    PlaceholderScreen(
-                        onOpenGallery = if (BuildConfig.DEBUG) ({ showGallery = true }) else null,
+                    SoloTodoNav(
+                        onOpenDevGallery = if (BuildConfig.DEBUG) ({ showGallery = true }) else null,
                     )
                 }
             }
