@@ -9,6 +9,7 @@ import com.solotodo.data.local.entity.TaskEntity
 import com.solotodo.data.local.entity.UserSettingsEntity
 import com.solotodo.data.repository.DailyQuestRepository
 import com.solotodo.data.repository.DungeonRepository
+import com.solotodo.data.repository.RankEventRepository
 import com.solotodo.data.repository.SettingsRepository
 import com.solotodo.data.repository.TaskRepository
 import com.solotodo.domain.streak.RankProgression
@@ -47,6 +48,7 @@ class StatusViewModel @Inject constructor(
     private val dqRepo: DailyQuestRepository,
     settingsRepo: SettingsRepository,
     dungeonRepo: DungeonRepository,
+    rankEventRepo: RankEventRepository,
     private val dayBoundary: DayBoundary,
     private val clock: Clock,
 ) : ViewModel() {
@@ -60,42 +62,56 @@ class StatusViewModel @Inject constructor(
 
     private val historyWindow = 60 // days — enough to compute longest streak for rank calc
 
-    val state: StateFlow<StatusUiState> = combine(
+    private val baseInputs = combine(
         settingsRepo.observe(),
         dqRepo.observeActiveItems(),
         dqRepo.observeLogsBetween(today.minus(historyWindow, DateTimeUnit.DAY), today),
         taskRepo.observeDueBetween(dayBoundary.todayWindow().first, dayBoundary.todayWindow().second),
         dungeonRepo.observeClearedCount(),
     ) { settings: UserSettingsEntity?, items, logs, tasks, clearedCount ->
-        val completeDays = completeDaysFrom(items, logs)
+        BaseInputs(settings, items, logs, tasks, clearedCount)
+    }
+
+    val state: StateFlow<StatusUiState> = combine(
+        baseInputs,
+        rankEventRepo.observeCurrentRank(),
+    ) { inputs, rank ->
+        val completeDays = completeDaysFrom(inputs.items, inputs.logs)
         val streak = StreakCalculator.currentStreak(completeDays, today)
         val longest = StreakCalculator.longestStreak(completeDays)
-        val rank = RankProgression.rankFor(longest, clearedCount, aToSGatesCleared = 0)
-        val dqTarget = items.size
-        val todaysLogs = logs.filter { it.day == today }
-        val progressByItem = buildProgressMap(items, todaysLogs)
+        val dqTarget = inputs.items.size
+        val todaysLogs = inputs.logs.filter { it.day == today }
+        val progressByItem = buildProgressMap(inputs.items, todaysLogs)
         val dqDone = progressByItem.count { (id, progress) ->
-            val target = items.find { it.id == id }?.let { parseTargetValue(it.target) } ?: 1
+            val target = inputs.items.find { it.id == id }?.let { parseTargetValue(it.target) } ?: 1
             progress >= target
         }
         StatusUiState(
-            designation = settings?.designation ?: "HUNTER",
+            designation = inputs.settings?.designation ?: "HUNTER",
             rank = rank,
             streak = streak,
             longestStreak = longest,
-            dungeonsCleared = clearedCount,
+            dungeonsCleared = inputs.clearedCount,
             daysToNextRank = RankProgression.daysToNextRank(rank, longest),
-            dqItems = items,
+            dqItems = inputs.items,
             dqProgressByItem = progressByItem,
             dqTarget = dqTarget,
             dqDone = dqDone,
-            todayTasks = tasks,
-            freezes = settings?.streakFreezes ?: 0,
+            todayTasks = inputs.tasks,
+            freezes = inputs.settings?.streakFreezes ?: 0,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = StatusUiState(),
+    )
+
+    private data class BaseInputs(
+        val settings: UserSettingsEntity?,
+        val items: List<DailyQuestItemEntity>,
+        val logs: List<DailyQuestLogEntity>,
+        val tasks: List<TaskEntity>,
+        val clearedCount: Int,
     )
 
     fun toggleDailyItem(item: DailyQuestItemEntity) {

@@ -38,6 +38,9 @@ interface DungeonDao {
     @Query("SELECT COUNT(*) FROM dungeon WHERE cleared_at IS NOT NULL")
     fun observeClearedCount(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM dungeon WHERE cleared_at IS NOT NULL")
+    suspend fun getClearedCount(): Int
+
     @Query("UPDATE dungeon SET cleared_at = :at, updated_at = :at WHERE id = :id")
     suspend fun markCleared(id: String, at: Instant)
 
@@ -56,6 +59,26 @@ interface DungeonDao {
 
     @Query("SELECT * FROM dungeon_floor WHERE id = :id")
     suspend fun getFloor(id: String): DungeonFloorEntity?
+
+    /**
+     * Floors whose `task_ids` JSON array contains [taskId]. UUID v4 values are
+     * 36 chars with no substring collisions in practice, so a `LIKE` is safe
+     * here. At Phase 7 we migrate to a dungeon_floor_task join table.
+     */
+    @Query("SELECT * FROM dungeon_floor WHERE task_ids LIKE '%' || :taskId || '%'")
+    suspend fun findFloorsContainingTaskId(taskId: String): List<DungeonFloorEntity>
+
+    @Query(
+        """
+        UPDATE dungeon_floor
+        SET cleared_at = :at, state = 'CLEARED', updated_at = :at
+        WHERE id = :id
+        """,
+    )
+    suspend fun markFloorCleared(id: String, at: Instant)
+
+    @Query("SELECT COUNT(*) FROM dungeon_floor WHERE dungeon_id = :dungeonId AND cleared_at IS NULL")
+    suspend fun countUnclearedFloors(dungeonId: String): Int
 
     /** Used only by the Realtime subscriber when a DELETE event arrives. */
     @Query("DELETE FROM dungeon WHERE id = :id")

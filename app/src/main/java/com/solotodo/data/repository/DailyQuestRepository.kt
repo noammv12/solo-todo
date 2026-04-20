@@ -8,6 +8,7 @@ import com.solotodo.data.local.dao.DailyQuestDao
 import com.solotodo.data.local.entity.DailyQuestItemEntity
 import com.solotodo.data.local.entity.DailyQuestLogEntity
 import com.solotodo.data.sync.OpLogWriter
+import com.solotodo.domain.rank.RankEvaluator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
@@ -21,6 +22,7 @@ class DailyQuestRepository @Inject constructor(
     private val dao: DailyQuestDao,
     private val opLog: OpLogWriter,
     private val deviceId: DeviceId,
+    private val rankEvaluator: RankEvaluator,
     private val clock: Clock = Clock.System,
 ) {
     fun observeActiveItems(): Flow<List<DailyQuestItemEntity>> = dao.observeActiveItems()
@@ -53,6 +55,7 @@ class DailyQuestRepository @Inject constructor(
 
         db.withTransaction {
             val existing = dao.getLog(questId, day)
+            val justCompleted: Boolean
             if (existing == null) {
                 val id = UUID.randomUUID().toString()
                 dao.upsertLog(
@@ -66,12 +69,20 @@ class DailyQuestRepository @Inject constructor(
                     ),
                 )
                 opLog.record(ENTITY_LOG, id, OpKind.CREATE, null, "{}")
+                justCompleted = completedAt != null
             } else if (progress > existing.progress) {
-                // bumpProgress does a monotonic guarded update (WHERE progress < new).
                 val clamped = progress.coerceAtMost(target)
                 dao.bumpProgress(questId = questId, day = day, progress = clamped, completedAt = completedAt)
                 opLog.record(ENTITY_LOG, existing.id, OpKind.PATCH, null, "{}")
+                justCompleted = completedAt != null && existing.completedAt == null
+            } else {
+                justCompleted = false
             }
+
+            // Rank evaluation fires only when a quest just crossed its target —
+            // avoids running on every progress tick. Evaluator is a no-op if
+            // the day's other quests aren't also complete yet.
+            if (justCompleted) rankEvaluator.evaluateAndEmit()
         }
     }
 

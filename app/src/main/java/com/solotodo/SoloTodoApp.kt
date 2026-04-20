@@ -3,6 +3,7 @@ package com.solotodo
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.solotodo.core.lifecycle.ForegroundObserver
 import com.solotodo.data.sync.SyncBootstrapper
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -12,6 +13,7 @@ class SoloTodoApp : Application(), Configuration.Provider {
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var syncBootstrapper: SyncBootstrapper
+    @Inject lateinit var foregroundObserver: ForegroundObserver
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -21,5 +23,6 @@ class SoloTodoApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         syncBootstrapper.start()
+        foregroundObserver.attach()
     }
 }

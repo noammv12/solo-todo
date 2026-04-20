@@ -1,6 +1,8 @@
 package com.solotodo.domain.streak
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -40,6 +42,5 @@ class StreakCalculatorTest {
         assertEquals(1, StreakCalculator.longestStreak(listOf(day)))
     }
 
-    private fun LocalDate.minusDay(n: Int): LocalDate =
-        kotlinx.datetime.minus(this, n, kotlinx.datetime.DateTimeUnit.DAY)
+    private fun LocalDate.minusDay(n: Int): LocalDate = this.minus(n, DateTimeUnit.DAY)
 }

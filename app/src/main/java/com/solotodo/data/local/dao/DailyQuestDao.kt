@@ -26,6 +26,9 @@ interface DailyQuestDao {
     @Query("SELECT * FROM daily_quest_item WHERE active = 1 ORDER BY order_index ASC")
     fun observeActiveItems(): Flow<List<DailyQuestItemEntity>>
 
+    @Query("SELECT * FROM daily_quest_item WHERE active = 1 ORDER BY order_index ASC")
+    suspend fun getActiveItems(): List<DailyQuestItemEntity>
+
     @Query("SELECT * FROM daily_quest_item WHERE id = :id")
     suspend fun getItem(id: String): DailyQuestItemEntity?
 
@@ -52,6 +55,9 @@ interface DailyQuestDao {
 
     @Query("SELECT * FROM daily_quest_log WHERE day BETWEEN :from AND :to ORDER BY day, quest_id")
     fun observeLogsBetween(from: LocalDate, to: LocalDate): Flow<List<DailyQuestLogEntity>>
+
+    @Query("SELECT * FROM daily_quest_log WHERE day BETWEEN :from AND :to ORDER BY day, quest_id")
+    suspend fun getLogsBetween(from: LocalDate, to: LocalDate): List<DailyQuestLogEntity>
 
     @Query("SELECT * FROM daily_quest_log WHERE quest_id = :questId AND day = :day LIMIT 1")
     suspend fun getLog(questId: String, day: LocalDate): DailyQuestLogEntity?

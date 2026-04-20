@@ -7,6 +7,7 @@ import com.solotodo.data.local.dao.DungeonDao
 import com.solotodo.data.local.entity.DungeonEntity
 import com.solotodo.data.local.entity.DungeonFloorEntity
 import com.solotodo.data.sync.OpLogWriter
+import com.solotodo.domain.rank.RankEvaluator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
 import javax.inject.Inject
@@ -17,6 +18,7 @@ class DungeonRepository @Inject constructor(
     private val db: SoloTodoDb,
     private val dao: DungeonDao,
     private val opLog: OpLogWriter,
+    private val rankEvaluator: RankEvaluator,
     private val clock: Clock = Clock.System,
 ) {
     fun observeActive(): Flow<List<DungeonEntity>> = dao.observeActive()
@@ -40,6 +42,7 @@ class DungeonRepository @Inject constructor(
         db.withTransaction {
             dao.markCleared(id, now)
             opLog.record(ENTITY_DUNGEON, id, OpKind.PATCH, null, "{}")
+            rankEvaluator.evaluateAndEmit()
         }
     }
 

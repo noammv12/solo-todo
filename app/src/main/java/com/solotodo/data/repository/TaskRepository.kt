@@ -8,6 +8,7 @@ import com.solotodo.data.local.StatKind
 import com.solotodo.data.local.dao.TaskDao
 import com.solotodo.data.local.entity.TaskEntity
 import com.solotodo.data.sync.OpLogWriter
+import com.solotodo.domain.rank.RankEvaluator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -28,6 +29,8 @@ class TaskRepository @Inject constructor(
     private val taskDao: TaskDao,
     private val opLog: OpLogWriter,
     private val deviceId: DeviceId,
+    private val dungeonClearResolver: DungeonClearResolver,
+    private val rankEvaluator: RankEvaluator,
     private val clock: Clock = Clock.System,
 ) {
 
@@ -89,6 +92,14 @@ class TaskRepository @Inject constructor(
         db.withTransaction {
             taskDao.markComplete(id, now)
             opLog.record(ENTITY, id, OpKind.PATCH, fieldsJson = null, fieldTimestampsJson = "{}")
+        }
+        // Post-write: propagate to Dungeon → Floor cleared caches in its own
+        // txn so resolver failure can't roll back the task mutation. When a
+        // dungeon was just cleared, evaluate rank separately (evaluator needs
+        // its own active txn for atomicity).
+        val dungeonCleared = dungeonClearResolver.onTaskCompleted(id)
+        if (dungeonCleared) {
+            db.withTransaction { rankEvaluator.evaluateAndEmit() }
         }
     }
 
