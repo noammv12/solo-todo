@@ -4,9 +4,13 @@ import com.solotodo.data.auth.AuthRepository
 import com.solotodo.data.local.SoloTodoDb
 import com.solotodo.data.local.dao.OpLogDao
 import com.solotodo.data.local.dao.SyncStateDao
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -41,6 +45,21 @@ class SyncEngine @Inject constructor(
     data class PullResult(val perTable: List<PullTranslator.TableResult>) {
         val total: Int get() = perTable.sumOf { it.rows }
     }
+
+    /**
+     * In-memory snapshot of the most recent sync attempt. Consumed by the
+     * dev-gallery diagnostics panel. Reset to `null` on sign-out via
+     * [clearLocalIfUserChanged]'s caller (bootstrapper).
+     */
+    data class Snapshot(
+        val ranAt: Instant,
+        val pushResult: PushResult?,
+        val pullResult: PullResult?,
+        val errorMessage: String?,
+    )
+
+    private val _lastSnapshot = MutableStateFlow<Snapshot?>(null)
+    val lastSnapshot: StateFlow<Snapshot?> = _lastSnapshot.asStateFlow()
 
     suspend fun pushOnce(): PushResult = pushLock.withLock {
         val uid = authRepository.currentUserId() ?: return@withLock PushResult(0, 0)
@@ -88,8 +107,35 @@ class SyncEngine @Inject constructor(
     suspend fun fullSync(): Pair<PushResult, PullResult> {
         val push = pushOnce()
         val pull = pullOnce()
+        _lastSnapshot.value = Snapshot(
+            ranAt = clock.now(),
+            pushResult = push,
+            pullResult = pull,
+            errorMessage = null,
+        )
         return push to pull
     }
+
+    /**
+     * Debug-gallery action: runs a full sync and captures any exception into
+     * [lastSnapshot] so the UI can display it. Unlike [fullSync] this never
+     * throws to the caller.
+     */
+    suspend fun runSyncNow() {
+        try {
+            fullSync()
+        } catch (e: Exception) {
+            _lastSnapshot.value = Snapshot(
+                ranAt = clock.now(),
+                pushResult = null,
+                pullResult = null,
+                errorMessage = e.message ?: e::class.simpleName,
+            )
+        }
+    }
+
+    /** Debug-gallery action: wipe every op-log entry. */
+    suspend fun clearOpLog(): Int = opLogDao.clearAll()
 
     /**
      * If the last-seen user differs from the current one, wipe all local

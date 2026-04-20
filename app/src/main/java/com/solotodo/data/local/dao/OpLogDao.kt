@@ -29,4 +29,8 @@ interface OpLogDao {
     /** Live count of unsynced ops — drives the expedited-push debouncer. */
     @Query("SELECT COUNT(*) FROM op_log WHERE synced_at IS NULL")
     fun observePendingCount(): Flow<Int>
+
+    /** Debug-only: wipe every op-log row. Used by the dev-gallery reset button. */
+    @Query("DELETE FROM op_log")
+    suspend fun clearAll(): Int
 }

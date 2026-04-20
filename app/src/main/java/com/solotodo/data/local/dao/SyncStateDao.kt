@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.solotodo.data.local.entity.SyncStateEntity
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
 @Dao
@@ -17,6 +18,9 @@ interface SyncStateDao {
 
     @Query("SELECT * FROM sync_state")
     suspend fun getAll(): List<SyncStateEntity>
+
+    @Query("SELECT * FROM sync_state ORDER BY entity ASC")
+    fun observeAll(): Flow<List<SyncStateEntity>>
 
     @Query("UPDATE sync_state SET last_pulled_at = :at WHERE entity = :entity")
     suspend fun setLastPulledAt(entity: String, at: Instant)

@@ -29,6 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.solotodo.data.auth.AuthRepository
+import com.solotodo.data.local.entity.SyncStateEntity
+import com.solotodo.data.sync.SyncEngine
 import com.solotodo.designsystem.SoloTokens
 import com.solotodo.designsystem.components.CornerBrackets
 import com.solotodo.designsystem.components.DiamondCheck
@@ -58,11 +61,27 @@ fun DevGalleryScreen(
 ) {
     val completedCount by viewModel.completedCount.collectAsState()
     val status by viewModel.status.collectAsState()
+    val pendingOpCount by viewModel.pendingOpCount.collectAsState()
+    val syncStates by viewModel.syncStates.collectAsState()
+    val authState by viewModel.authState.collectAsState()
+    val lastSnapshot by viewModel.lastSnapshot.collectAsState()
     Box(modifier = Modifier.fillMaxSize().background(SoloTokens.Colors.BgVoid)) {
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            item { SectionHeader("SYNC · DIAGNOSTICS") }
+            item {
+                SyncStatusPanel(
+                    pendingOpCount = pendingOpCount,
+                    syncStates = syncStates,
+                    authState = authState,
+                    lastSnapshot = lastSnapshot,
+                    onSyncNow = viewModel::syncNow,
+                    onClearOpLog = viewModel::clearOpLog,
+                )
+            }
+
             item { SectionHeader("DATABASE · DEV TOOLS") }
             item { DbControls(completed = completedCount, status = status, onSeed = viewModel::seed, onWipe = viewModel::wipe) }
 
@@ -124,6 +143,104 @@ private fun SectionHeader(label: String) {
         color = SoloTokens.Colors.Stroke,
         style = SystemMonoLabel,
     )
+}
+
+@Composable
+private fun SyncStatusPanel(
+    pendingOpCount: Int,
+    syncStates: List<SyncStateEntity>,
+    authState: AuthRepository.AuthState,
+    lastSnapshot: SyncEngine.Snapshot?,
+    onSyncNow: () -> Unit,
+    onClearOpLog: () -> Unit,
+) {
+    Panel(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = "auth: ${authStateLabel(authState)}",
+                color = SoloTokens.Colors.Text,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = "pending op-log: $pendingOpCount",
+                color = if (pendingOpCount == 0) SoloTokens.Colors.TextMuted else SoloTokens.Colors.Glow,
+                style = SystemMonoLabel,
+            )
+            if (lastSnapshot != null) {
+                Text(
+                    text = "last sync: ${lastSnapshot.ranAt}",
+                    color = SoloTokens.Colors.TextMuted,
+                    style = SystemMonoLabel,
+                )
+                lastSnapshot.pushResult?.let {
+                    Text(
+                        text = "  push → pushed=${it.pushed} failed=${it.failed}",
+                        color = if (it.failed == 0) SoloTokens.Colors.TextMuted else SoloTokens.Colors.Danger,
+                        style = SystemMonoLabel,
+                    )
+                }
+                lastSnapshot.pullResult?.let {
+                    Text(
+                        text = "  pull → rows=${it.total} tables=${it.perTable.size}",
+                        color = SoloTokens.Colors.TextMuted,
+                        style = SystemMonoLabel,
+                    )
+                }
+                lastSnapshot.errorMessage?.let {
+                    Text(
+                        text = "  error: $it",
+                        color = SoloTokens.Colors.Danger,
+                        style = SystemMonoLabel,
+                    )
+                }
+            } else {
+                Text(
+                    text = "last sync: —",
+                    color = SoloTokens.Colors.TextDim,
+                    style = SystemMonoLabel,
+                )
+            }
+            if (syncStates.isNotEmpty()) {
+                Text(
+                    text = "per-table cursors:",
+                    color = SoloTokens.Colors.TextMuted,
+                    style = SystemMonoLabel,
+                )
+                syncStates.forEach { state ->
+                    Text(
+                        text = "  ${state.entity}: ${state.lastPulledAt ?: "—"}",
+                        color = SoloTokens.Colors.TextDim,
+                        style = SystemMonoLabel,
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "› SYNC NOW",
+                    color = SoloTokens.Colors.Glow,
+                    style = SystemMonoLabel,
+                    modifier = Modifier
+                        .clickable { onSyncNow() }
+                        .padding(8.dp),
+                )
+                Text(
+                    text = "› CLEAR OP-LOG",
+                    color = SoloTokens.Colors.Danger,
+                    style = SystemMonoLabel,
+                    modifier = Modifier
+                        .clickable { onClearOpLog() }
+                        .padding(8.dp),
+                )
+            }
+        }
+    }
+}
+
+private fun authStateLabel(state: AuthRepository.AuthState): String = when (state) {
+    AuthRepository.AuthState.Loading -> "loading"
+    AuthRepository.AuthState.NotAuthed -> "not authed"
+    is AuthRepository.AuthState.Guest -> "guest · ${state.userId.take(8)}…"
+    is AuthRepository.AuthState.Authenticated -> "authed · ${state.email ?: state.userId.take(8) + "…"}"
 }
 
 @Composable
