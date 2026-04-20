@@ -23,12 +23,11 @@ object SoloSupabase {
             supabaseUrl = BuildConfig.SUPABASE_URL,
             supabaseKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY,
         ) {
-            install(Auth) {
-                // Default: persist session in EncryptedSharedPreferences-backed storage
-                // via the Android platform plugin baked into supabase-kt.
-                alwaysAutoRefresh = true
-                autoLoadFromStorage = true
-            }
+            // The Android platform plugin baked into supabase-kt handles
+            // persisted session + auto-refresh by default; no explicit config
+            // needed here. Lifecycle callbacks stay on (default) so the session
+            // survives background → foreground cycles without extra plumbing.
+            install(Auth)
             install(Postgrest)
             install(Realtime)
         }

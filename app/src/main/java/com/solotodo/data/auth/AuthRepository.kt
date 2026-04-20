@@ -1,7 +1,7 @@
 package com.solotodo.data.auth
 
 import io.github.jan.supabase.auth.Auth
-import io.github.jan.supabase.auth.SessionStatus
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -45,11 +45,12 @@ class AuthRepository @Inject constructor(
     }
 
     /** Quick accessor for other repositories that need the current user_id. */
-    fun currentUserId(): String? = auth.currentUserOrNull()?.id
+    fun currentUserId(): String? = auth.currentSessionOrNull()?.user?.id
 
     private fun UserInfo.toAuthState(): AuthState {
-        val isAnonymous = appMetadata?.get("provider")?.toString()?.contains("anonymous") == true
-            || email.isNullOrBlank()
+        // Anonymous users have no email and no verified identities attached.
+        // Once they link an identity (Google, magic-link, etc.) email populates.
+        val isAnonymous = email.isNullOrBlank()
         return if (isAnonymous) {
             AuthState.Guest(userId = id)
         } else {
