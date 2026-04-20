@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,6 +8,22 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
+
+// Supabase credentials loaded at configuration time. PUBLIC values (publishable
+// key is designed to ship client-side; RLS protects the data). Loaded from
+// local.properties if present, otherwise falls back to the hardcoded defaults
+// so CI builds without the file.
+//
+// Hoisted above `android { }` because the DSL scope shadows `java.util` on some
+// Gradle versions (see build failure on CI run #13).
+val supabaseProps: Properties = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val supabaseUrl: String = supabaseProps.getProperty("SUPABASE_URL")
+    ?: "https://ksqkrzmjefiadcqhzyba.supabase.co"
+val supabaseKey: String = supabaseProps.getProperty("SUPABASE_PUBLISHABLE_KEY")
+    ?: "sb_publishable_c_R7iIPG8NvKWj1lPpXFYQ_wTHVFEbk"
 
 android {
     namespace = "com.solotodo"
@@ -21,19 +39,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
 
-        // Supabase credentials. Exposed via BuildConfig for both build variants.
-        // These are PUBLIC values (publishable key is designed to be shipped
-        // client-side; RLS on the server is what actually protects data).
-        // Read from local.properties if present, fall back to hardcoded defaults
-        // so CI still builds without the file.
-        val localProps = java.util.Properties().apply {
-            val f = rootProject.file("local.properties")
-            if (f.exists()) f.inputStream().use { load(it) }
-        }
-        val supabaseUrl = localProps.getProperty("SUPABASE_URL")
-            ?: "https://ksqkrzmjefiadcqhzyba.supabase.co"
-        val supabaseKey = localProps.getProperty("SUPABASE_PUBLISHABLE_KEY")
-            ?: "sb_publishable_c_R7iIPG8NvKWj1lPpXFYQ_wTHVFEbk"
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabaseKey\"")
     }
