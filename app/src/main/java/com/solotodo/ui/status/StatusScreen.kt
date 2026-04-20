@@ -98,7 +98,7 @@ private fun HunterHeader(state: StatusUiState) {
                 color = SoloTokens.Colors.TextMuted,
                 style = SystemMonoLabel,
             )
-            val nextRankLabel = state.daysToNextRank?.let { "${it} days to ${state.rank.next()?.label ?: "MAX"}" }
+            val nextRankLabel = state.daysToNextRank?.let { "${it} days to ${state.rank.next()?.name ?: "MAX"}" }
                 ?: "RANK · MAXED"
             Text(
                 text = nextRankLabel,
