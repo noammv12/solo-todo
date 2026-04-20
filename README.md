@@ -2,7 +2,7 @@
 
 Solo Leveling–themed productivity app. Native Android (Kotlin + Jetpack Compose).
 
-**Status:** Phase 0 — scaffolding. Empty project that builds and launches to a placeholder screen.
+**Status:** Phase 4.5b complete — sync engine (push/pull) and Realtime subscriptions on all synced tables. Next: Phase 5 (Cinematics + Rank Progression).
 
 - Design source: `C:\Users\noamm\solo-todo-design\sololeveling\` (readonly reference)
 - Implementation plan: `C:\Users\noamm\.claude\plans\how-will-you-do-jazzy-lake.md`
