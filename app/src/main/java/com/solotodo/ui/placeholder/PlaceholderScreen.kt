@@ -1,6 +1,7 @@
 package com.solotodo.ui.placeholder
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +18,7 @@ import com.solotodo.designsystem.SoloTokens
 import com.solotodo.designsystem.theme.SystemMonoLabel
 
 @Composable
-fun PlaceholderScreen() {
+fun PlaceholderScreen(onOpenGallery: (() -> Unit)? = null) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -45,6 +46,17 @@ fun PlaceholderScreen() {
                 color = SoloTokens.Colors.TextMuted,
                 style = MaterialTheme.typography.labelMedium,
             )
+            if (onOpenGallery != null) {
+                Spacer(Modifier.height(40.dp))
+                Text(
+                    text = "› OPEN DEV GALLERY",
+                    color = SoloTokens.Colors.Stroke,
+                    style = SystemMonoLabel,
+                    modifier = Modifier
+                        .clickable { onOpenGallery() }
+                        .padding(12.dp),
+                )
+            }
         }
     }
 }
