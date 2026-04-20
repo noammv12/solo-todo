@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,11 +18,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.solotodo.data.auth.AuthRepository
 import com.solotodo.designsystem.SoloTokens
+import com.solotodo.ui.auth.AuthViewModel
+import com.solotodo.ui.auth.SignInScreen
 import com.solotodo.ui.quests.QuestsScreen
 import com.solotodo.ui.quickadd.QuickAddSheet
 import com.solotodo.ui.status.StatusScreen
@@ -32,7 +37,27 @@ import com.solotodo.ui.status.StatusScreen
 @Composable
 fun SoloTodoNav(
     onOpenDevGallery: (() -> Unit)? = null,
+    authViewModel: AuthViewModel = hiltViewModel(),
 ) {
+    val authState by authViewModel.state.collectAsState()
+    // Route on auth state: sign-in screen until the user is authed (even Guest).
+    when (authState.status) {
+        AuthRepository.AuthState.Loading -> {
+            // Brief splash matching app background; avoids flicker.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(SoloTokens.Colors.BgVoid),
+            )
+            return
+        }
+        AuthRepository.AuthState.NotAuthed -> {
+            SignInScreen(viewModel = authViewModel)
+            return
+        }
+        else -> Unit // continue to the app below
+    }
+
     val navController = rememberNavController()
     var quickAddOpen by remember { mutableStateOf(false) }
     val backStackEntry by navController.currentBackStackEntryAsState()
