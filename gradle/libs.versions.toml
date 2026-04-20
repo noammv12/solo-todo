@@ -26,12 +26,17 @@ coroutines = "1.9.0"
 kotlinxDatetime = "0.6.1"
 kotlinxSerialization = "1.7.3"
 
-# Supabase (added in Phase 4)
+# Supabase (Phase 4)
 supabase = "3.0.3"
 ktor = "3.0.2"
 
+# Note: As of Supabase 2.x+ the client supports the new `sb_publishable_...`
+# keys in the same `supabaseKey` slot that used to hold the JWT anon key.
+
 # Networking
 okhttp = "4.12.0"
+
+# ──────── Supabase Kotlin client (Phase 4) ────────
 
 # Testing
 junit = "4.13.2"
@@ -57,6 +62,13 @@ androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-compose-ui-text-google-fonts = { module = "androidx.compose.ui:ui-text-google-fonts" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+
+# Supabase
+supabase-bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabase" }
+supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
+supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }
+supabase-realtime = { module = "io.github.jan-tennert.supabase:realtime-kt" }
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
 
 # Hilt
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }

@@ -20,6 +20,22 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+
+        // Supabase credentials. Exposed via BuildConfig for both build variants.
+        // These are PUBLIC values (publishable key is designed to be shipped
+        // client-side; RLS on the server is what actually protects data).
+        // Read from local.properties if present, fall back to hardcoded defaults
+        // so CI still builds without the file.
+        val localProps = java.util.Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) f.inputStream().use { load(it) }
+        }
+        val supabaseUrl = localProps.getProperty("SUPABASE_URL")
+            ?: "https://ksqkrzmjefiadcqhzyba.supabase.co"
+        val supabaseKey = localProps.getProperty("SUPABASE_PUBLISHABLE_KEY")
+            ?: "sb_publishable_c_R7iIPG8NvKWj1lPpXFYQ_wTHVFEbk"
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabaseKey\"")
     }
 
     buildTypes {
@@ -92,6 +108,13 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
+
+    // Supabase (Phase 4)
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.realtime)
+    implementation(libs.ktor.client.android)
 
     // Testing
     testImplementation(libs.junit)

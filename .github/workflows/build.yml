@@ -41,6 +41,14 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
+      - name: Write local.properties with Supabase credentials
+        run: |
+          cat > local.properties <<'EOF'
+          SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://ksqkrzmjefiadcqhzyba.supabase.co' }}
+          SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_c_R7iIPG8NvKWj1lPpXFYQ_wTHVFEbk' }}
+          EOF
+        shell: bash
+
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
