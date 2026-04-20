@@ -20,6 +20,7 @@ import com.solotodo.data.remote.dto.TaskDto
 import com.solotodo.data.remote.dto.TaskListDto
 import com.solotodo.data.remote.dto.UserSettingsDto
 import com.solotodo.data.remote.dto.toEntity
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.RealtimeChannel
@@ -189,7 +190,7 @@ class RealtimeSubscriber @Inject constructor(
     ) {
         val flow: Flow<PostgresAction> = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = tableName
-            filter = "user_id=eq.$userId"
+            filter("user_id", FilterOperator.EQ, userId)
         }
         val job = flow
             .onEach { action ->
