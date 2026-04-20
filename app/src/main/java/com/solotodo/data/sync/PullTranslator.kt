@@ -188,7 +188,7 @@ class PullTranslator @Inject constructor(
         return TableResult(entity, count)
     }
 
-    private suspend inline fun <reified T> selectNewer(
+    private suspend inline fun <reified T : Any> selectNewer(
         table: String,
         userId: String,
         since: Instant,
