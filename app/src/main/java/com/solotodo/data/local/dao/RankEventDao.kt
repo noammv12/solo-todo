@@ -19,6 +19,9 @@ interface RankEventDao {
     @Query("SELECT * FROM rank_event WHERE cinematic_played = 0 ORDER BY occurred_at ASC")
     fun observePending(): Flow<List<RankEventEntity>>
 
+    @Query("SELECT * FROM rank_event WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): RankEventEntity?
+
     @Query("UPDATE rank_event SET cinematic_played = 1 WHERE id = :id")
     suspend fun markPlayed(id: String)
 

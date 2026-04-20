@@ -16,6 +16,10 @@ composeBom = "2025.01.00"
 # DI
 hilt = "2.53.1"
 hiltNavigationCompose = "1.2.0"
+hiltWork = "1.2.0"
+
+# Background work
+work = "2.10.0"
 
 # Data
 room = "2.6.1"
@@ -74,6 +78,11 @@ ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "k
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltWork" }
+hilt-ext-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltWork" }
+
+# WorkManager
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 
 # Room
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
@@ -98,6 +107,8 @@ androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-mani
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "work" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

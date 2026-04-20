@@ -12,6 +12,9 @@ interface TaskListDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(list: TaskListEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(lists: List<TaskListEntity>)
+
     @Query("SELECT * FROM task_list ORDER BY order_index ASC")
     fun observeAll(): Flow<List<TaskListEntity>>
 

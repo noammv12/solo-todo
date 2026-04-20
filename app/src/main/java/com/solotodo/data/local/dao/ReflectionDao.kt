@@ -13,6 +13,12 @@ interface ReflectionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(reflection: ReflectionEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(reflections: List<ReflectionEntity>)
+
+    @Query("SELECT * FROM reflection WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): ReflectionEntity?
+
     @Query("SELECT * FROM reflection ORDER BY week_start DESC")
     fun observeAll(): Flow<List<ReflectionEntity>>
 

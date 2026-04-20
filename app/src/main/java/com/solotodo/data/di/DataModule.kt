@@ -10,6 +10,7 @@ import com.solotodo.data.local.dao.RankEventDao
 import com.solotodo.data.local.dao.ReflectionDao
 import com.solotodo.data.local.dao.SettingsDao
 import com.solotodo.data.local.dao.StatDao
+import com.solotodo.data.local.dao.SyncStateDao
 import com.solotodo.data.local.dao.TaskDao
 import com.solotodo.data.local.dao.TaskListDao
 import dagger.Module
@@ -46,4 +47,5 @@ object DataModule {
     @Provides fun provideStatDao(db: SoloTodoDb): StatDao = db.statDao()
     @Provides fun provideSettingsDao(db: SoloTodoDb): SettingsDao = db.settingsDao()
     @Provides fun provideOpLogDao(db: SoloTodoDb): OpLogDao = db.opLogDao()
+    @Provides fun provideSyncStateDao(db: SoloTodoDb): SyncStateDao = db.syncStateDao()
 }

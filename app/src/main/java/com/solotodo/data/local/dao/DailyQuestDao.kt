@@ -36,6 +36,9 @@ interface DailyQuestDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertLog(log: DailyQuestLogEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertLogs(logs: List<DailyQuestLogEntity>)
+
     @Query("SELECT * FROM daily_quest_log WHERE day = :day ORDER BY quest_id")
     fun observeLogsForDay(day: LocalDate): Flow<List<DailyQuestLogEntity>>
 
@@ -44,6 +47,9 @@ interface DailyQuestDao {
 
     @Query("SELECT * FROM daily_quest_log WHERE quest_id = :questId AND day = :day LIMIT 1")
     suspend fun getLog(questId: String, day: LocalDate): DailyQuestLogEntity?
+
+    @Query("SELECT * FROM daily_quest_log WHERE id = :id LIMIT 1")
+    suspend fun getLogById(id: String): DailyQuestLogEntity?
 
     /**
      * Bump progress for today's log if it already exists, else caller inserts.

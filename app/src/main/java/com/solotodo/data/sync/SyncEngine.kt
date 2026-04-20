@@ -1,0 +1,119 @@
+package com.solotodo.data.sync
+
+import com.solotodo.data.auth.AuthRepository
+import com.solotodo.data.local.SoloTodoDb
+import com.solotodo.data.local.dao.OpLogDao
+import com.solotodo.data.local.dao.SyncStateDao
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Clock
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Orchestrates push (drain op-log → Postgrest) and pull (fetch remote rows
+ * since last cursor → upsert into Room silently). Safe to call concurrently —
+ * a [Mutex] serialises pushes within a single process.
+ *
+ * Callers:
+ *  - [PushWorker] → [pushOnce]
+ *  - [PullWorker] → [pullOnce]
+ *  - [PeriodicSyncWorker] → [fullSync]
+ *  - [SyncBootstrapper] → [clearLocalIfUserChanged] on auth transitions
+ *
+ * All public methods short-circuit if no user is signed in.
+ */
+@Singleton
+class SyncEngine @Inject constructor(
+    private val db: SoloTodoDb,
+    private val opLogDao: OpLogDao,
+    private val syncStateDao: SyncStateDao,
+    private val authRepository: AuthRepository,
+    private val pushTranslator: PushTranslator,
+    private val pullTranslator: PullTranslator,
+    private val statRecomputer: StatRecomputer,
+    private val clock: Clock,
+) {
+
+    private val pushLock = Mutex()
+
+    data class PushResult(val pushed: Int, val failed: Int)
+    data class PullResult(val perTable: List<PullTranslator.TableResult>) {
+        val total: Int get() = perTable.sumOf { it.rows }
+    }
+
+    suspend fun pushOnce(): PushResult = pushLock.withLock {
+        val uid = authRepository.currentUserId() ?: return@withLock PushResult(0, 0)
+        var pushed = 0
+        var failed = 0
+        val acked = mutableListOf<String>()
+
+        while (true) {
+            val batch = opLogDao.pending(limit = BATCH)
+            if (batch.isEmpty()) break
+
+            for (op in batch) {
+                try {
+                    pushTranslator.push(op, uid)
+                    acked += op.opId
+                    pushed++
+                } catch (e: Exception) {
+                    failed++
+                    // Don't rethrow — keep draining. The op stays un-acked and
+                    // will be retried next cycle. If it fails repeatedly we
+                    // may want to quarantine (future enhancement).
+                }
+            }
+
+            if (acked.isNotEmpty()) {
+                opLogDao.markSynced(acked.toList(), clock.now())
+                acked.clear()
+            }
+
+            // Stop if we only drained unsuccessful ops (all still pending) to
+            // avoid busy-looping on a persistent failure.
+            if (batch.size == failed) break
+        }
+        PushResult(pushed, failed)
+    }
+
+    suspend fun pullOnce(): PullResult {
+        val uid = authRepository.currentUserId() ?: return PullResult(emptyList())
+        clearLocalIfUserChanged(uid)
+        val perTable = pullTranslator.pullAll(uid)
+        statRecomputer.recompute()
+        return PullResult(perTable)
+    }
+
+    suspend fun fullSync(): Pair<PushResult, PullResult> {
+        val push = pushOnce()
+        val pull = pullOnce()
+        return push to pull
+    }
+
+    /**
+     * If the last-seen user differs from the current one, wipe all local
+     * tables (including op-log) before the next pull. Protects against
+     * cross-user data leaks after sign-out / sign-in with a different
+     * account.
+     */
+    suspend fun clearLocalIfUserChanged(currentUserId: String) {
+        val lastSeen = syncStateDao.anyLastUserId()
+        if (lastSeen != null && lastSeen != currentUserId) {
+            // Note: clearAllTables() cannot run inside a transaction.
+            db.clearAllTables()
+        }
+    }
+
+    /** Fire-and-forget: called from bootstrapper after writes. Debounced by worker. */
+    fun requestExpedited() {
+        // No-op here; scheduling happens in [SyncBootstrapper]. This method
+        // exists so repositories can later depend on SyncEngine directly
+        // without re-plumbing.
+    }
+
+    companion object {
+        /** Ops per drain batch; tuned for op-log index + Postgrest throughput. */
+        const val BATCH = 100
+    }
+}

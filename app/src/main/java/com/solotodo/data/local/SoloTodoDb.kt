@@ -10,6 +10,7 @@ import com.solotodo.data.local.dao.RankEventDao
 import com.solotodo.data.local.dao.ReflectionDao
 import com.solotodo.data.local.dao.SettingsDao
 import com.solotodo.data.local.dao.StatDao
+import com.solotodo.data.local.dao.SyncStateDao
 import com.solotodo.data.local.dao.TaskDao
 import com.solotodo.data.local.dao.TaskListDao
 import com.solotodo.data.local.entity.DailyQuestItemEntity
@@ -20,6 +21,7 @@ import com.solotodo.data.local.entity.OpLogEntity
 import com.solotodo.data.local.entity.RankEventEntity
 import com.solotodo.data.local.entity.ReflectionEntity
 import com.solotodo.data.local.entity.StatEntity
+import com.solotodo.data.local.entity.SyncStateEntity
 import com.solotodo.data.local.entity.TaskEntity
 import com.solotodo.data.local.entity.TaskListEntity
 import com.solotodo.data.local.entity.UserSettingsEntity
@@ -47,6 +49,7 @@ import com.solotodo.data.local.entity.UserSettingsEntity
         StatEntity::class,
         UserSettingsEntity::class,
         OpLogEntity::class,
+        SyncStateEntity::class,
     ],
     version = SoloTodoDb.SCHEMA_VERSION,
     exportSchema = true,
@@ -62,9 +65,11 @@ abstract class SoloTodoDb : RoomDatabase() {
     abstract fun statDao(): StatDao
     abstract fun settingsDao(): SettingsDao
     abstract fun opLogDao(): OpLogDao
+    abstract fun syncStateDao(): SyncStateDao
 
     companion object {
-        const val SCHEMA_VERSION = 1
+        /** V2 adds `sync_state` for per-table pull bookmarks. */
+        const val SCHEMA_VERSION = 2
         const val DATABASE_NAME = "solotodo.db"
     }
 }

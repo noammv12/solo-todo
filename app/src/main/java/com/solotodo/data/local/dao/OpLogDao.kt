@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.solotodo.data.local.entity.OpLogEntity
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
 @Dao
@@ -24,4 +25,8 @@ interface OpLogDao {
 
     @Query("DELETE FROM op_log WHERE synced_at IS NOT NULL AND synced_at < :cutoff")
     suspend fun purgeAckedBefore(cutoff: Instant): Int
+
+    /** Live count of unsynced ops — drives the expedited-push debouncer. */
+    @Query("SELECT COUNT(*) FROM op_log WHERE synced_at IS NULL")
+    fun observePendingCount(): Flow<Int>
 }

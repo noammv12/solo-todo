@@ -17,6 +17,9 @@ interface DungeonDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertDungeon(dungeon: DungeonEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertDungeons(dungeons: List<DungeonEntity>)
+
     @Update
     suspend fun updateDungeon(dungeon: DungeonEntity)
 
