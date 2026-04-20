@@ -20,6 +20,7 @@ object SoloTokens {
         val BgVoid = Color(0xFF05070E)
         val BgPanel = Color(0xFF0A1628)
         val BgPanelRaised = Color(0xFF0E1C33)
+        val BgPanelDanger = Color(0xFF1E0508)
 
         // Strokes / borders (default Hunter accent)
         val Stroke = Color(0xFF1FB6FF)
@@ -35,6 +36,7 @@ object SoloTokens {
 
         // Accents
         val AccentShadow = Color(0xFF9D4EDD)
+        val AccentShadowLift = Color(0xFFC77DFF)
         val AccentGold = Color(0xFFFFD447)
         val Danger = Color(0xFFFF3355)
 
@@ -101,6 +103,7 @@ object SoloTokens {
         const val trackingLabel = 0.10f
         const val trackingHeading = 0.12f
         const val trackingWide = 0.30f
+        const val trackingMonoHeading = 0.30f
 
         // Font families are defined in fonts/Fonts.kt once downloadable-fonts set up
     }
@@ -127,6 +130,8 @@ object SoloTokens {
         val ChamferSm = 10.dp
         val ChamferMd = 14.dp
         val ChamferLg = 20.dp
+        /** Corner radius reserved for Glance widgets — system-level rounding. */
+        val RadiusWidget = 18.dp
     }
 
     /**
@@ -149,10 +154,23 @@ object SoloTokens {
         val SheetIn = 320.milliseconds
         val Pulse = 320.milliseconds
         val CaretBlink = 800.milliseconds
+        val CinematicFlash = 400.milliseconds
         val CinematicCharge = 800.milliseconds
         val CinematicReveal = 1200.milliseconds
         val Ambient = 2400.milliseconds
         val ScanlineCycle = 20.seconds
+    }
+
+    /**
+     * Accessibility overrides. Respect OS-level prefers-reduced-motion and prefers-reduced-haptics.
+     * When reduce-motion is on:
+     *  - Cap every animation at [ReduceMotionMaxDurationMs]
+     *  - Disable scanline overlay entirely (if [DisableScanlinesWhenReduceMotion])
+     *  - Collapse cinematics to a single modal card + heavy haptic
+     */
+    object Accessibility {
+        const val ReduceMotionMaxDurationMs = 100L
+        const val DisableScanlinesWhenReduceMotion = true
     }
 
     /** Z-order matches the prototype's stacking rules. Useful for Popup / Dialog layering. */
