@@ -10,6 +10,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Small natural-language parser for task entry. Covers the token grammar in
@@ -25,7 +27,8 @@ import kotlinx.datetime.toLocalDateTime
  * Unrecognised tokens stay in the title verbatim. The parser is greedy-longest
  * for date phrases and tolerant of mixed case.
  */
-class NaturalLanguageDateParser(
+@Singleton
+class NaturalLanguageDateParser @Inject constructor(
     private val clock: Clock = Clock.System,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
 ) {

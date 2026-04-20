@@ -12,6 +12,8 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * User-local midnight boundary math for the Daily Quest tick.
@@ -24,7 +26,8 @@ import kotlinx.datetime.toLocalDateTime
  *  - Travel: use the timezone *active at tick time*, not at log creation,
  *    unless UserSettings.anchorDailyToOriginalTimezone is on (not yet in spec).
  */
-class DayBoundary(
+@Singleton
+class DayBoundary @Inject constructor(
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
     private val clock: Clock = Clock.System,
 ) {
