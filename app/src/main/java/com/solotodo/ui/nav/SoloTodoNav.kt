@@ -27,7 +27,7 @@ import com.solotodo.data.auth.AuthRepository
 import com.solotodo.designsystem.SoloTokens
 import com.solotodo.ui.auth.AuthViewModel
 import com.solotodo.ui.auth.SignInScreen
-import com.solotodo.ui.onboarding.AwakeningPlaceholderScreen
+import com.solotodo.ui.onboarding.AwakeningHostScreen
 import com.solotodo.ui.quests.QuestsScreen
 import com.solotodo.ui.quickadd.QuickAddSheet
 import com.solotodo.ui.status.StatusScreen
@@ -60,8 +60,7 @@ fun SoloTodoNav(
         else -> Unit // continue to the app below
     }
 
-    // Phase 6.1: onboarding gate. Users who haven't cleared Awakening stay on
-    // the placeholder until they skip (or, in Phase 6.2+, complete the flow).
+    // Onboarding gate: users route to the 5-step Awakening until it commits.
     val onboardingCompleted by awakeningGateViewModel.onboardingCompleted.collectAsState()
     when (onboardingCompleted) {
         null -> {
@@ -73,7 +72,7 @@ fun SoloTodoNav(
             return
         }
         false -> {
-            AwakeningPlaceholderScreen()
+            AwakeningHostScreen()
             return
         }
         true -> Unit // drop through to the tab NavHost

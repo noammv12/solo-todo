@@ -47,6 +47,10 @@ fun StatusScreen(
             .fillMaxSize()
             .background(SoloTokens.Colors.BgVoid),
     ) {
+        WelcomeBanner(
+            modifier = Modifier
+                .align(Alignment.TopCenter),
+        )
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),

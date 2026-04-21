@@ -8,9 +8,11 @@ import com.solotodo.data.local.dao.DailyQuestDao
 import com.solotodo.data.local.entity.DailyQuestItemEntity
 import com.solotodo.data.local.entity.DailyQuestLogEntity
 import com.solotodo.data.sync.OpLogWriter
+import com.solotodo.domain.onboarding.PresetBank
 import com.solotodo.domain.rank.RankEvaluator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import java.util.UUID
 import javax.inject.Inject
@@ -42,6 +44,56 @@ class DailyQuestRepository @Inject constructor(
         db.withTransaction {
             dao.upsertItems(items)
             items.forEach { opLog.record(ENTITY_ITEM, it.id, OpKind.CREATE, null, "{}") }
+        }
+    }
+
+    /**
+     * Awakening-commit helper. Replaces the current "active today" set with
+     * the user's Step 3 selection.
+     *
+     * Behaviour, in a single transaction (joins the outer committer txn):
+     *  1. Read the currently-active items.
+     *  2. For each active item NOT in the new selection → upsert with
+     *     `active = false` (row stays in DB for historical logs) + PATCH op-log.
+     *  3. Upsert every preset in the new selection with `active = true` and the
+     *     selection order as `orderIndex` → CREATE op-log.
+     *     (Preset IDs are stable, so on Replay Awakening the same ID round-
+     *     trips: REPLACE conflict strategy rewrites the row in-place.)
+     *
+     * Preserves `createdAt` for presets that were previously active, so rank
+     * / streak history isn't forged.
+     */
+    suspend fun replaceActiveItemsFromPresets(
+        presetIds: List<String>,
+        now: Instant,
+    ) {
+        require(presetIds.size in 3..5) {
+            "presetIds must have 3..5 entries, was ${presetIds.size}"
+        }
+        val newIds = presetIds.toSet()
+        db.withTransaction {
+            val currentlyActive = dao.getActiveItems()
+            val toDeactivate = currentlyActive.filter { it.id !in newIds }
+            toDeactivate.forEach { existing ->
+                dao.upsertItem(existing.copy(active = false, updatedAt = now))
+                opLog.record(ENTITY_ITEM, existing.id, OpKind.PATCH, null, "{}")
+            }
+            val priorById: Map<String, DailyQuestItemEntity> =
+                currentlyActive.associateBy { it.id }
+            val newEntities = presetIds.mapIndexed { idx, id ->
+                val base = PresetBank.buildEntity(
+                    presetId = id,
+                    orderIndex = idx,
+                    now = now,
+                    deviceId = deviceId.value,
+                )
+                // Preserve createdAt if this preset already existed.
+                priorById[id]?.let { base.copy(createdAt = it.createdAt) } ?: base
+            }
+            dao.upsertItems(newEntities)
+            newEntities.forEach {
+                opLog.record(ENTITY_ITEM, it.id, OpKind.CREATE, null, "{}")
+            }
         }
     }
 

@@ -66,6 +66,47 @@ class SettingsRepository @Inject constructor(
         update(current.copy(hardMode = hardMode))
     }
 
+    suspend fun setDesignation(name: String) {
+        require(name.length in 2..16) { "designation length must be 2..16, was ${name.length}" }
+        val current = initializeIfMissing()
+        update(current.copy(designation = name))
+    }
+
+    /**
+     * Awakening-commit helper: flip every onboarding-affected field in a single
+     * `update` call, which in turn emits one op-log PATCH row inside the
+     * caller's (outer) transaction. The committer is responsible for also
+     * writing the daily-quest items + optional first task + clearing the draft
+     * inside the same outer transaction.
+     *
+     * @param notificationsJson the JSON string produced by
+     *   `NotificationPrefs.Channels.toJson()` — passed as a string so this
+     *   repository stays oblivious to the notifications schema.
+     */
+    suspend fun finishAwakening(
+        designation: String,
+        dailyQuestCount: Int,
+        notificationsJson: String,
+        now: kotlinx.datetime.Instant,
+    ) {
+        require(designation.length in 2..16) {
+            "designation length must be 2..16, was ${designation.length}"
+        }
+        require(dailyQuestCount in 3..5) {
+            "dailyQuestCount must be 3..5, was $dailyQuestCount"
+        }
+        val current = initializeIfMissing()
+        update(
+            current.copy(
+                designation = designation,
+                dailyQuestCount = dailyQuestCount,
+                notifications = notificationsJson,
+                onboardingCompleted = true,
+                awakenedAt = now,
+            ),
+        )
+    }
+
     companion object {
         const val ENTITY = "user_settings"
 
