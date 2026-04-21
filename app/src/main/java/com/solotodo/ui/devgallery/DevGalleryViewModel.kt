@@ -2,6 +2,7 @@ package com.solotodo.ui.devgallery
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.solotodo.core.haptics.SoloHaptics
 import com.solotodo.data.auth.AuthRepository
 import com.solotodo.data.dev.DevSeeder
 import com.solotodo.data.local.dao.OpLogDao
@@ -32,6 +33,7 @@ import javax.inject.Inject
 class DevGalleryViewModel @Inject constructor(
     private val seeder: DevSeeder,
     private val syncEngine: SyncEngine,
+    private val haptics: SoloHaptics,
     authRepository: AuthRepository,
     opLogDao: OpLogDao,
     syncStateDao: SyncStateDao,
@@ -108,4 +110,14 @@ class DevGalleryViewModel @Inject constructor(
             _status.value = "released $released op(s) for retry"
         }
     }
+
+    // Phase 6.1: fire individual haptic patterns from DevGallery so the user can
+    // feel each waveform on-device before onboarding ships in Phase 6.2.
+    fun fireLight() = viewModelScope.launch { haptics.light() }
+    fun fireTap() = viewModelScope.launch { haptics.tap() }
+    fun fireRigid() = viewModelScope.launch { haptics.rigid() }
+    fun fireThreshold() = viewModelScope.launch { haptics.threshold() }
+    fun fireWarning() = viewModelScope.launch { haptics.warning() }
+    fun fireSuccess() = viewModelScope.launch { haptics.success() }
+    fun fireRankUp() = viewModelScope.launch { haptics.rankUpPulse() }
 }

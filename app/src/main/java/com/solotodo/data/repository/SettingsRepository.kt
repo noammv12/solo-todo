@@ -40,6 +40,32 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    /**
+     * Phase 6.1 helpers. Each one reads the singleton, patches a single field,
+     * and writes through the existing op-log path so changes sync like any
+     * other `user_settings` edit.
+     */
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        val current = initializeIfMissing()
+        update(current.copy(onboardingCompleted = completed))
+    }
+
+    suspend fun setAwakenedAt(awakenedAt: kotlinx.datetime.Instant?) {
+        val current = initializeIfMissing()
+        update(current.copy(awakenedAt = awakenedAt))
+    }
+
+    suspend fun setDailyQuestCount(count: Int) {
+        require(count in 3..5) { "dailyQuestCount must be 3..5, was $count" }
+        val current = initializeIfMissing()
+        update(current.copy(dailyQuestCount = count))
+    }
+
+    suspend fun setHardMode(hardMode: Boolean) {
+        val current = initializeIfMissing()
+        update(current.copy(hardMode = hardMode))
+    }
+
     companion object {
         const val ENTITY = "user_settings"
 
@@ -51,6 +77,10 @@ class SettingsRepository @Inject constructor(
             reduceMotion = false,
             vacationUntil = null,
             streakFreezes = 0,
+            onboardingCompleted = false,
+            awakenedAt = null,
+            dailyQuestCount = 3,
+            hardMode = false,
             updatedAt = now,
         )
 

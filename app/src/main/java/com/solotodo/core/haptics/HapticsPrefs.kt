@@ -31,5 +31,7 @@ class HapticsPrefs @Inject constructor(
         const val CHANNEL_RANK_UP = "rank_up"
         const val CHANNEL_SUCCESS = "success"
         const val CHANNEL_TAP = "tap"
+        const val CHANNEL_THRESHOLD = "threshold"
+        const val CHANNEL_WARNING = "warning"
     }
 }

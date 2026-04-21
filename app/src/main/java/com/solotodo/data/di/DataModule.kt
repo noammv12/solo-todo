@@ -2,6 +2,7 @@ package com.solotodo.data.di
 
 import android.content.Context
 import androidx.room.Room
+import com.solotodo.data.local.Migrations
 import com.solotodo.data.local.SoloTodoDb
 import com.solotodo.data.local.dao.DailyQuestDao
 import com.solotodo.data.local.dao.DungeonDao
@@ -32,9 +33,10 @@ object DataModule {
             SoloTodoDb::class.java,
             SoloTodoDb.DATABASE_NAME,
         )
-            // Migrations will be added here per version. Until we ship to real users,
-            // a destructive fallback keeps dev phone wipes simple.
-            .fallbackToDestructiveMigration()
+            .addMigrations(*Migrations.ALL)
+            // Downgrades (rare — only when reverting to an older build) still
+            // wipe cleanly; upgrades use the explicit migrations above.
+            .fallbackToDestructiveMigrationOnDowngrade()
             .build()
     }
 

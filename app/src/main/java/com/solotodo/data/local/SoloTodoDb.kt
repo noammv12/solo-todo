@@ -71,8 +71,10 @@ abstract class SoloTodoDb : RoomDatabase() {
         /**
          * V2 added `sync_state` for per-table pull bookmarks.
          * V3 added `retry_count` + `last_error` columns to `op_log` for push retry/quarantine.
+         * V4 added `onboarding_completed`, `awakened_at`, `daily_quest_count`, `hard_mode` to `user_settings`
+         *    for Phase 6 Awakening (see Migrations.kt).
          */
-        const val SCHEMA_VERSION = 3
+        const val SCHEMA_VERSION = 4
         const val DATABASE_NAME = "solotodo.db"
     }
 }

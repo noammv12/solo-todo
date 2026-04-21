@@ -90,6 +90,19 @@ fun DevGalleryScreen(
             item { SectionHeader("DATABASE · DEV TOOLS") }
             item { DbControls(completed = completedCount, status = status, onSeed = viewModel::seed, onWipe = viewModel::wipe) }
 
+            item { SectionHeader("HAPTICS · PATTERN TEST") }
+            item {
+                HapticsPanel(
+                    onLight = viewModel::fireLight,
+                    onTap = viewModel::fireTap,
+                    onRigid = viewModel::fireRigid,
+                    onThreshold = viewModel::fireThreshold,
+                    onWarning = viewModel::fireWarning,
+                    onSuccess = viewModel::fireSuccess,
+                    onRankUp = viewModel::fireRankUp,
+                )
+            }
+
             item { SectionHeader("TOKENS · COLORS") }
             item { ColorSwatches() }
 
@@ -315,6 +328,56 @@ private fun DbControls(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun HapticsPanel(
+    onLight: () -> Unit,
+    onTap: () -> Unit,
+    onRigid: () -> Unit,
+    onThreshold: () -> Unit,
+    onWarning: () -> Unit,
+    onSuccess: () -> Unit,
+    onRankUp: () -> Unit,
+) {
+    Panel(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = "Tap to feel each pattern. Respects user haptic prefs — toggle them in settings (when they exist) to verify gating.",
+                color = SoloTokens.Colors.TextMuted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            HapticButtonRow("› LIGHT", "Hex reveal", onLight)
+            HapticButtonRow("› TAP", "Keystroke", onTap)
+            HapticButtonRow("› RIGID", "CTA confirm", onRigid)
+            HapticButtonRow("› THRESHOLD", "Max-pick hit", onThreshold)
+            HapticButtonRow("› WARNING", "Validation error", onWarning)
+            HapticButtonRow("› SUCCESS", "Task complete", onSuccess)
+            HapticButtonRow("› RANK-UP", "Cinematic beat", onRankUp)
+        }
+    }
+}
+
+@Composable
+private fun HapticButtonRow(label: String, description: String, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = label,
+            color = SoloTokens.Colors.Glow,
+            style = SystemMonoLabel,
+            modifier = Modifier
+                .clickable { onClick() }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+        Text(
+            text = description,
+            color = SoloTokens.Colors.TextDim,
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 }
 

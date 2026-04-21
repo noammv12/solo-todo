@@ -3,7 +3,7 @@ package com.solotodo.ui.cinematics
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.solotodo.core.a11y.ReduceMotionPolicy
-import com.solotodo.core.haptics.CinematicHaptics
+import com.solotodo.core.haptics.SoloHaptics
 import com.solotodo.core.lifecycle.ForegroundObserver
 import com.solotodo.data.repository.RankEventRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CinematicHostViewModel @Inject constructor(
     private val rankEventRepository: RankEventRepository,
-    private val haptics: CinematicHaptics,
+    private val haptics: SoloHaptics,
     foregroundObserver: ForegroundObserver,
     reduceMotionPolicy: ReduceMotionPolicy,
 ) : ViewModel() {

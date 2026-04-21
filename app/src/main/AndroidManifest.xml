@@ -29,6 +29,21 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+                Phase 6.1 deep-link surface. Used by:
+                  - solotodo://status          → Status tab (default widget tap target)
+                  - solotodo://quest/{id}      → open a specific task (widget row tap)
+                  - solotodo://awakening/replay→ re-enter Awakening (Settings replay, widget empty state)
+                NavHost registers matching `navDeepLink` entries in 6.3+; for 6.1
+                the filter is scaffolding so URIs route into the app at all.
+            -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="solotodo" />
+            </intent-filter>
         </activity>
 
         <!--
